@@ -51,6 +51,7 @@ func main() {
 		context.Background(),
 		admin.WithTopicCreate(topic),
 		admin.WithBrokerAddrCreate(brokerAddr),
+		//admin.WithMessageType(primitive.TransMsg),
 	)
 	if err != nil {
 		fmt.Println("Create topic error:", err.Error())
