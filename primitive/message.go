@@ -444,6 +444,9 @@ const (
 	TransMsgHalf
 	TransMsgCommit
 	DelayMsg
+	// for rocketmq 5.x
+	TransMsg
+	FifoMsg
 )
 
 type LocalTransactionState int

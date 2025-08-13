@@ -182,7 +182,21 @@ func (a *admin) CreateTopic(ctx context.Context, opts ...OptionCreate) error {
 		TopicSysFlag:    cfg.TopicSysFlag,
 		Order:           cfg.Order,
 	}
-
+	switch cfg.MessageType {
+	case primitive.NormalMsg:
+		break
+	case primitive.DelayMsg:
+		request.Attributes = "+message.type=DELAY"
+		break
+	case primitive.TransMsg:
+		request.Attributes = "+message.type=TRANSACTION"
+		break
+	case primitive.FifoMsg:
+		request.Attributes = "+message.type=FIFO"
+		break
+	default:
+		panic("unhandled default case")
+	}
 	cmd := remote.NewRemotingCommand(internal.ReqCreateTopic, request, nil)
 	if cfg.BrokerAddr == "" {
 		a.cli.GetNameSrv().UpdateTopicRouteInfo(cfg.ClusterName)
