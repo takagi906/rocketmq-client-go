@@ -17,6 +17,8 @@ limitations under the License.
 
 package admin
 
+import "github.com/apache/rocketmq-client-go/v2/primitive"
+
 func defaultTopicConfigCreate() TopicConfigCreate {
 	opts := TopicConfigCreate{
 		DefaultTopic:    "defaultTopic",
@@ -26,6 +28,7 @@ func defaultTopicConfigCreate() TopicConfigCreate {
 		TopicFilterType: "SINGLE_TAG",
 		TopicSysFlag:    0,
 		Order:           false,
+		MessageType:     primitive.NormalMsg,
 	}
 	return opts
 }
@@ -41,6 +44,7 @@ type TopicConfigCreate struct {
 	TopicFilterType string
 	TopicSysFlag    int
 	Order           bool
+	MessageType     primitive.MessageType
 }
 
 type OptionCreate func(*TopicConfigCreate)
@@ -96,6 +100,12 @@ func WithTopicSysFlag(TopicSysFlag int) OptionCreate {
 func WithOrder(Order bool) OptionCreate {
 	return func(opts *TopicConfigCreate) {
 		opts.Order = Order
+	}
+}
+
+func WithMessageType(messageType primitive.MessageType) OptionCreate {
+	return func(opts *TopicConfigCreate) {
+		opts.MessageType = messageType
 	}
 }
 
