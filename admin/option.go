@@ -146,3 +146,52 @@ func WithNameSrvAddr(NameSrvAddr []string) OptionDelete {
 		opts.NameSrvAddr = NameSrvAddr
 	}
 }
+
+type OptionSubscription func(*SubscriptionConfig)
+
+func defaultSubscriptionConfig() SubscriptionConfig {
+	opts := SubscriptionConfig{
+		ConsumeEnable:                  true,
+		ConsumeFromMinEnable:           false,
+		ConsumeBroadcastEnable:         false,
+		RetryMaxTimes:                  16,
+		RetryQueueNums:                 1,
+		BrokerId:                       0,
+		WhichBrokerWhenConsumeSlowly:   1,
+		NotifyConsumerIdsChangedEnable: true,
+		CleanOffset:                    false,
+	}
+	return opts
+}
+
+type SubscriptionConfig struct {
+	GroupName                      string
+	ClusterName                    string
+	ConsumeEnable                  bool
+	ConsumeFromMinEnable           bool
+	ConsumeBroadcastEnable         bool
+	RetryMaxTimes                  int
+	RetryQueueNums                 int
+	BrokerId                       int
+	WhichBrokerWhenConsumeSlowly   int
+	NotifyConsumerIdsChangedEnable bool
+	CleanOffset                    bool
+}
+
+func WithSubscription(subscription string) OptionSubscription {
+	return func(opts *SubscriptionConfig) {
+		opts.GroupName = subscription
+	}
+}
+
+func WithSubscriptionClusterName(ClusterName string) OptionSubscription {
+	return func(opts *SubscriptionConfig) {
+		opts.ClusterName = ClusterName
+	}
+}
+
+func WithSubscriptionCleanOffset(cleanOffset bool) OptionSubscription {
+	return func(opts *SubscriptionConfig) {
+		opts.CleanOffset = cleanOffset
+	}
+}

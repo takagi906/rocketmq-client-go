@@ -45,8 +45,10 @@ const (
 	ReqSendBatchMessage              = int16(320)
 	ReqCheckTransactionState         = int16(39)
 	ReqNotifyConsumerIdsChanged      = int16(40)
+	ReqCreateSubscription            = int16(200)
 	ReqGetAllSubscriptionGroupConfig = int16(201)
 	ReqGetAllTopicListFromNameServer = int16(206)
+	ReqDeleteSubscription            = int16(207)
 	ReqDeleteTopicInBroker           = int16(215)
 	ReqDeleteTopicInNameSrv          = int16(216)
 	ReqResetConsumerOffset           = int16(220)
@@ -634,4 +636,16 @@ func (request *ReplyMessageRequestHeader) Decode(properties map[string]string) {
 	if v, existed := properties["storeTimestamp"]; existed {
 		request.storeTimestamp, _ = strconv.ParseInt(v, 10, 0)
 	}
+}
+
+type DeleteSubscriptionRequestHeader struct {
+	GroupName   string
+	CleanOffset bool
+}
+
+func (request *DeleteSubscriptionRequestHeader) Encode() map[string]string {
+	maps := make(map[string]string)
+	maps["groupName"] = request.GroupName
+	maps["cleanOffset"] = strconv.FormatBool(request.CleanOffset)
+	return maps
 }

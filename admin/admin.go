@@ -327,6 +327,77 @@ func (a *admin) UpdateTopicRouteInfo(ctx context.Context, topic string) (routeDa
 	return a.cli.GetNameSrv().UpdateTopicRouteInfo(topic)
 }
 
+func (a *admin) CreateSubscription(ctx context.Context, opts ...OptionSubscription) error {
+	cfg := defaultSubscriptionConfig()
+	for _, apply := range opts {
+		apply(&cfg)
+	}
+	request := SubscriptionGroupConfig{
+		GroupName:                      cfg.GroupName,
+		ConsumeEnable:                  cfg.ConsumeEnable,
+		ConsumeFromMinEnable:           cfg.ConsumeFromMinEnable,
+		ConsumeBroadcastEnable:         cfg.ConsumeBroadcastEnable,
+		RetryQueueNums:                 cfg.RetryQueueNums,
+		RetryMaxTimes:                  cfg.RetryMaxTimes,
+		BrokerId:                       cfg.BrokerId,
+		WhichBrokerWhenConsumeSlowly:   cfg.WhichBrokerWhenConsumeSlowly,
+		NotifyConsumerIdsChangedEnable: cfg.NotifyConsumerIdsChangedEnable,
+	}
+	var subscriptionGroupWrapper SubscriptionGroupWrapper
+	body, _ := subscriptionGroupWrapper.Encode(request)
+	cmd := remote.NewRemotingCommand(internal.ReqCreateSubscription, nil, body)
+	a.cli.GetNameSrv().UpdateTopicRouteInfo(cfg.ClusterName)
+	brokerAddresses := a.cli.GetNameSrv().FindAllBrokerAddressByCluster(cfg.ClusterName)
+	for brokerAddr, _ := range brokerAddresses {
+		_, err := a.cli.InvokeSync(ctx, brokerAddr, cmd, 5*time.Second)
+		if err != nil {
+			rlog.Error("create subscription error", map[string]interface{}{
+				rlog.LogKeyConsumerGroup: cfg.GroupName,
+				rlog.LogKeyBroker:        brokerAddr,
+				rlog.LogKeyUnderlayError: err,
+			})
+			return err
+		} else {
+			rlog.Info("create subscription success", map[string]interface{}{
+				rlog.LogKeyConsumerGroup: cfg.GroupName,
+				rlog.LogKeyBroker:        brokerAddr,
+			})
+		}
+	}
+	return nil
+}
+
+func (a *admin) DeleteSubscription(ctx context.Context, opts ...OptionSubscription) error {
+	cfg := defaultSubscriptionConfig()
+	for _, apply := range opts {
+		apply(&cfg)
+	}
+	request := &internal.DeleteSubscriptionRequestHeader{
+		GroupName:   cfg.GroupName,
+		CleanOffset: cfg.CleanOffset,
+	}
+	cmd := remote.NewRemotingCommand(internal.ReqDeleteSubscription, request, nil)
+	a.cli.GetNameSrv().UpdateTopicRouteInfo(cfg.ClusterName)
+	brokerAddresses := a.cli.GetNameSrv().FindAllBrokerAddressByCluster(cfg.ClusterName)
+	for brokerAddr, _ := range brokerAddresses {
+		_, err := a.cli.InvokeSync(ctx, brokerAddr, cmd, 5*time.Second)
+		if err != nil {
+			rlog.Error("delete subscription error", map[string]interface{}{
+				rlog.LogKeyConsumerGroup: cfg.GroupName,
+				rlog.LogKeyBroker:        brokerAddr,
+				rlog.LogKeyUnderlayError: err,
+			})
+			return err
+		} else {
+			rlog.Info("delete subscription success", map[string]interface{}{
+				rlog.LogKeyConsumerGroup: cfg.GroupName,
+				rlog.LogKeyBroker:        brokerAddr,
+			})
+		}
+	}
+	return nil
+}
+
 func (a *admin) Close() error {
 	a.closeOnce.Do(func() {
 		a.cli.Shutdown()
