@@ -39,6 +39,8 @@ type Admin interface {
 	//GetBrokerClusterInfo(ctx context.Context) (*remote.RemotingCommand, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	UpdateTopicRouteInfo(ctx context.Context, topic string) (*internal.TopicRouteData, bool, error)
+	CreateSubscription(ctx context.Context, opts ...OptionSubscription) error
+	DeleteSubscription(ctx context.Context, opts ...OptionSubscription) error
 	Close() error
 }
 
