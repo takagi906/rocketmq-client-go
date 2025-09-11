@@ -166,6 +166,14 @@ func (a *admin) FetchAllTopicList(ctx context.Context) (*TopicList, error) {
 	return &topicList, nil
 }
 
+func EnableIntegrationTest() {
+	internal.IntegrationTestSwitch = true
+}
+
+func DisableIntegrationTest() {
+	internal.IntegrationTestSwitch = false
+}
+
 // CreateTopic create topic.
 // TODO: another implementation like sarama, without brokerAddr as input
 func (a *admin) CreateTopic(ctx context.Context, opts ...OptionCreate) error {
