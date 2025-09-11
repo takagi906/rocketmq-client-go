@@ -19,6 +19,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"github.com/apache/rocketmq-client-go/v2/errors"
 	"math/rand"
 	"sort"
@@ -45,6 +46,9 @@ const (
 	defaultQueueNums = 4
 	MasterId         = int64(0)
 )
+
+// Integration test switch, should not be enabled under normal circumstances
+var IntegrationTestSwitch = false
 
 func (s *namesrvs) cleanOfflineBroker() {
 	// TODO optimize
@@ -419,7 +423,6 @@ func (s *namesrvs) queryTopicRouteInfoFromServer(topic string) (*TopicRouteData,
 		})
 		return nil, primitive.NewRemotingErr("namesrv list empty")
 	}
-
 	for i := 0; i < s.Size(); i++ {
 		rc := remote.NewRemotingCommand(ReqGetRouteInfoByTopic, request, nil)
 		ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
@@ -430,6 +433,23 @@ func (s *namesrvs) queryTopicRouteInfoFromServer(topic string) (*TopicRouteData,
 			break
 		}
 		cancel()
+	}
+	if IntegrationTestSwitch {
+		for i := 0; i < s.Size(); i++ {
+			address := s.getNameServerAddress()
+			rc := remote.NewRemotingCommand(ReqGetRouteInfoByTopic, request, nil)
+			ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+			response, err = s.nameSrvClient.InvokeSync(ctx, address, rc)
+			for err != nil || response.Code != ResSuccess {
+				cancel()
+				time.Sleep(2 * time.Second)
+				fmt.Printf("Be patient, the topic does not exist on the NameServer %v yet.\n", address)
+				rc := remote.NewRemotingCommand(ReqGetRouteInfoByTopic, request, nil)
+				ctx, cancel = context.WithTimeout(context.Background(), requestTimeout)
+				response, err = s.nameSrvClient.InvokeSync(ctx, address, rc)
+			}
+			cancel()
+		}
 	}
 	if err != nil {
 		rlog.Error("connect to namesrv failed.", map[string]interface{}{
